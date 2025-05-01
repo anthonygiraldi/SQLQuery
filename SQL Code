@@ -1,0 +1,43 @@
+SELECT
+    ART.Name AS 'Artist',
+    COUNT(DISTINCT ALB.AlbumId) AS 'Number of Albums',
+    COUNT(IL.InvoiceLineId) AS 'Tracks Sold',
+    ROUND(AVG(IL.UnitPrice), 2) AS 'Average Track Price',
+    ROUND(SUM(IL.UnitPrice * IL.Quantity), 2) AS 'Total Sales',
+    (
+        SELECT
+            INV.BillingCountry
+        FROM
+            Album AS AL2
+        JOIN
+            Track AS TR2 ON AL2.AlbumId = TR2.AlbumId
+        JOIN
+            InvoiceLine AS IL2 ON TR2.TrackId = IL2.TrackId
+        JOIN
+            Invoice AS INV ON IL2.InvoiceId = INV.InvoiceId
+        WHERE
+            AL2.ArtistId = ART.ArtistId
+        GROUP BY
+            INV.BillingCountry
+        ORDER BY
+            SUM(IL2.UnitPrice * IL2.Quantity) DESC
+        LIMIT 1
+    ) AS 'Top Country'
+FROM
+    Artist AS ART
+JOIN
+    Album AS ALB ON ART.ArtistId = ALB.ArtistId
+JOIN
+    Track AS TR ON ALB.AlbumId = TR.AlbumId
+JOIN
+    InvoiceLine AS IL ON TR.TrackId = IL.TrackId
+JOIN
+    Invoice AS INV ON IL.InvoiceId = INV.InvoiceId
+JOIN
+    Customer AS C ON INV.CustomerId = C.CustomerId
+GROUP BY
+    ART.ArtistId,
+    ART.Name
+ORDER BY
+    'Total Sales' DESC
+LIMIT 5;
